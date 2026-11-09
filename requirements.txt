@@ -10,3 +10,4 @@ scipy>=1.10
 imageio-ffmpeg>=0.5
 streamlit-webrtc
 av
+opencv-python-headless
