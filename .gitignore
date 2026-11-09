@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+runs/
+database/*.db
+output/*/*
+!output/*/.gitkeep
+models/*.pt
+dataset/images/*/*
+dataset/labels/*/*
+!dataset/images/*/.gitkeep
+!dataset/labels/*/.gitkeep

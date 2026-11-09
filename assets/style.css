@@ -1,0 +1,42 @@
+/* MangoVision AI - tema hijau mangga */
+:root { --mv-green:#2d9d4b; --mv-dark:#1b4332; --mv-mid:#40916c; --mv-light:#f3f6f4; --mv-yellow:#f4b942; }
+
+.stApp { background: #fafbfa; }
+.block-container { padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1250px; }
+
+/* Sidebar hijau tua */
+section[data-testid="stSidebar"] { background: linear-gradient(180deg, var(--mv-dark) 0%, #14352a 100%); }
+section[data-testid="stSidebar"] * { color: #e8f5ec !important; }
+section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"] { border-radius: 10px; margin: 2px 6px; }
+section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"]:hover { background: rgba(255,255,255,.10); }
+section[data-testid="stSidebar"] a[aria-current="page"] { background: var(--mv-green) !important; font-weight: 600; }
+section[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,.2); }
+
+/* Header halaman */
+.mv-header { background: linear-gradient(135deg, var(--mv-dark), var(--mv-green)); color: #fff;
+  padding: 1.3rem 1.6rem; border-radius: 16px; margin-bottom: 1.3rem; box-shadow: 0 4px 14px rgba(27,67,50,.18); }
+.mv-header h1 { color: #fff !important; margin: 0; font-size: 1.9rem; padding: 0; }
+.mv-header p { margin: .25rem 0 0 0; color: #d8f3dc; font-size: .98rem; }
+
+/* Card */
+.mv-card { background: #fff; border: 1px solid #e3ebe6; border-left: 5px solid var(--mv-green);
+  border-radius: 12px; padding: .9rem 1.1rem; margin-bottom: .8rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.mv-card h4 { margin: 0 0 .3rem 0; color: var(--mv-dark); font-size: 1.02rem; }
+.mv-card p { margin: 0; color: #3d4f45; font-size: .93rem; line-height: 1.5; }
+.mv-warn { border-left-color: var(--mv-yellow); background: #fffbf0; }
+
+/* Metric */
+div[data-testid="stMetric"] { background: #fff; border: 1px solid #e3ebe6; border-radius: 14px;
+  padding: .9rem 1.1rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+div[data-testid="stMetricValue"] { color: var(--mv-dark); font-weight: 700; }
+div[data-testid="stMetricLabel"] p { color: #5b6f63; }
+
+/* Tombol */
+.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] {
+  background: var(--mv-green); border: none; color: #fff; border-radius: 10px; font-weight: 600; }
+.stButton > button[kind="primary"]:hover { background: var(--mv-mid); }
+.stButton > button, .stDownloadButton > button { border-radius: 10px; }
+
+/* Tab */
+button[data-baseweb="tab"][aria-selected="true"] { color: var(--mv-dark); font-weight: 700; }
+h2, h3 { color: var(--mv-dark); }

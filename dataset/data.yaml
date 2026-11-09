@@ -1,0 +1,9 @@
+﻿path: D:/Praktikum_Citra/MangoVision_AI/MangoVision_AI/dataset
+train: images/train
+val: images/val
+test: images/test
+nc: 3
+names:
+  0: Over ripe
+  1: Ripe
+  2: Unripe
