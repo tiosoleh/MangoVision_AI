@@ -149,7 +149,221 @@ def process_video(model, video_path: str, original_name: str, conf: float, imgsz
 
 
 # ---------- membaca hasil tersimpan ----------
-def list_track_files() -> list[Path]:
+
+def process_video(
+    model,
+    video_path: str,
+    original_name: str,
+    conf: float,
+    imgsz: int,
+    frame_interval: int = 1,
+    max_frames: int = 0,
+    progress_cb: Callable[[float, str], None] | None = None
+) -> dict:
+    """Proses video menggunakan OpenCV dan YOLO ByteTrack."""
+
+    info = video_info(video_path)
+
+    stride = max(1, int(frame_interval))
+    out_fps = max(1.0, info["fps"] / stride)
+
+    stem = f"{safe_stem(original_name)}_{timestamp()}"
+
+    TRACKING_DIR.mkdir(parents=True, exist_ok=True)
+
+    raw_path = TRACKING_DIR / f"{stem}_raw.mp4"
+    final_path = TRACKING_DIR / f"{stem}_hasil.mp4"
+    csv_path = TRACKING_DIR / f"{stem}_tracks.csv"
+
+    allowed = mango_class_ids(model)
+
+    # Reset tracker untuk video baru
+    model.predictor = None
+
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        raise RuntimeError(
+            "OpenCV gagal membuka video. "
+            "Pastikan video menggunakan format MP4 yang kompatibel."
+        )
+
+    writer = None
+    rows = []
+    n_proc = 0
+    frame_idx = 0
+
+    total_proc = max(
+        1,
+        (info["frames"] + stride - 1) // stride
+    )
+
+    try:
+        while True:
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            # Proses frame berdasarkan interval
+            if frame_idx % stride == 0:
+
+                # Jalankan YOLO ByteTrack pada frame
+                results = model.track(
+                    source=frame,
+                    tracker="bytetrack.yaml",
+                    conf=conf,
+                    imgsz=imgsz,
+                    persist=True,
+                    verbose=False
+                )
+
+                if not results:
+                    frame_idx += 1
+                    continue
+
+                res = results[0]
+
+                if res.orig_img is not None:
+                    frame = res.orig_img.copy()
+
+                # Inisialisasi video writer
+                if writer is None:
+                    h, w = frame.shape[:2]
+
+                    writer = cv2.VideoWriter(
+                        str(raw_path),
+                        cv2.VideoWriter_fourcc(*"mp4v"),
+                        out_fps,
+                        (w, h)
+                    )
+
+                    if not writer.isOpened():
+                        raise IOError(
+                            "Gagal membuat video keluaran."
+                        )
+
+                tracks = extract_tracks(res, allowed)
+
+                n_obj = len(tracks)
+
+                for tid, cf, x1, y1, x2, y2 in tracks:
+                    rows.append((
+                        frame_idx,
+                        tid,
+                        cf,
+                        x1,
+                        y1,
+                        x2,
+                        y2,
+                        (x1 + x2) / 2,
+                        (y1 + y2) / 2
+                    ))
+
+                    label = (
+                        f"ID {tid} {cf:.2f}"
+                        if tid >= 0
+                        else f"{cf:.2f}"
+                    )
+
+                    draw_box(
+                        frame,
+                        (x1, y1, x2, y2),
+                        label,
+                        color_for(tid if tid >= 0 else 0)
+                    )
+
+                cv2.putText(
+                    frame,
+                    f"Frame {frame_idx} | Objek: {n_obj}",
+                    (10, 28),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 0, 0),
+                    4,
+                    cv2.LINE_AA
+                )
+
+                cv2.putText(
+                    frame,
+                    f"Frame {frame_idx} | Objek: {n_obj}",
+                    (10, 28),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA
+                )
+
+                writer.write(frame)
+
+                n_proc += 1
+
+                if progress_cb:
+                    frac = min(
+                        1.0,
+                        n_proc / total_proc
+                    )
+
+                    progress_cb(
+                        frac,
+                        f"Memproses frame {frame_idx} "
+                        f"({n_proc} frame dianalisis)"
+                    )
+
+                if max_frames and n_proc >= max_frames:
+                    break
+
+            frame_idx += 1
+
+    finally:
+        cap.release()
+
+        if writer is not None:
+            writer.release()
+
+    if n_proc == 0:
+        raise RuntimeError(
+            "Tidak ada frame yang berhasil diproses. "
+            "Periksa format video atau kompatibilitas OpenCV."
+        )
+
+    df = pd.DataFrame(rows, columns=TRACK_COLUMNS)
+
+    df.to_csv(csv_path, index=False)
+
+    playable = reencode_h264(raw_path, final_path)
+
+    if playable:
+        raw_path.unlink(missing_ok=True)
+        video_out = final_path
+    else:
+        video_out = raw_path
+
+    meta = dict(
+        video=original_name,
+        fps=info["fps"],
+        frame_interval=stride,
+        conf=conf,
+        imgsz=imgsz,
+        frames_diproses=n_proc,
+        total_frame_video=info["frames"],
+        video_hasil=video_out.name,
+        browser_playable=playable
+    )
+
+    csv_path.with_suffix(".json").write_text(
+        json.dumps(meta, indent=2, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    return dict(
+        df=df,
+        video_path=video_out,
+        csv_path=csv_path,
+        meta=meta
+    )
+
     TRACKING_DIR.mkdir(parents=True, exist_ok=True)
     return sorted(TRACKING_DIR.glob("*_tracks.csv"), key=lambda p: p.stat().st_mtime, reverse=True)
 
