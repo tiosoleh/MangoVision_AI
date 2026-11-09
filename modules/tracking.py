@@ -148,7 +148,6 @@ def process_video(model, video_path: str, original_name: str, conf: float, imgsz
     return dict(df=df, video_path=video_out, csv_path=csv_path, meta=meta)
 
 
-# ---------- membaca hasil tersimpan ----------
 
 # ---------- membaca hasil tersimpan ----------
 
@@ -173,11 +172,4 @@ def load_tracks(csv_path: Path) -> tuple[pd.DataFrame, dict]:
         else {}
     )
 
-    return df, meta
-
-
-def load_tracks(csv_path: Path) -> tuple[pd.DataFrame, dict]:
-    df = pd.read_csv(csv_path)
-    meta_p = Path(csv_path).with_suffix(".json")
-    meta = json.loads(meta_p.read_text(encoding="utf-8")) if meta_p.exists() else {}
     return df, meta
